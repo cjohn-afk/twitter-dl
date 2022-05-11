@@ -2,25 +2,33 @@ from time import sleep
 from os import mkdir
 from os.path import exists,isdir,isfile
 import sys
-from sqlalchemy import create_engine
+from datetime import datetime
+import pytz
+
 import threading
 import multiprocessing
+
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from config import *
+import db_queries
 
-engine = create_engine("sqlite+pysqlite:///" + database_file, echo=True, future=True)
+from config import bearer_token
 
 totalRequests = 0
 headers = CaseInsensitiveDict()
 headers["Authorization"] = "Bearer " + bearer_token
+
+def reformat_date(twitter_date):
+    return  datetime.strptime(twitter_date,'%a %b %d %H:%M:%S +0000 %Y').replace(tzinfo=pytz.UTC)
 
 def requestTrimmer():
     global totalRequests
     while True:
         if totalRequests > 0:
             totalRequests -= 1
+        elif totalRequests == -1:
+            break
         sleep(1.15)
 
 def requestLimiter():
@@ -41,33 +49,44 @@ def download(URL, location):
         print(URL)
         print(filename + " already exists. It will not be downloaded.")
         
-def downloadUserMedia(user):
+def downloadUserMedia(username):
     global totalRequests
     paginationToken = None
     
-    response = requests.get('https://api.twitter.com/2/users/by/username/' + user, headers=headers)
-    totalRequests += 1
-    requestLimiter()
-    id = response.json()['data']['id']
-
-    if not exists(user):
-        mkdir(user)
-        print("Created directory './" + user + "'.")
+    account = db_queries.get_account_by_username(username)
+    if account is None:
+        print("No stored ID for " + username + ". Requesting ID...")
+        response = requests.get('https://api.twitter.com/2/users/by/username/' + username, headers=headers)
+        totalRequests += 1
+        requestLimiter()
+        id = int(response.json()['data']['id'])
+        db_queries.add_account(id, username)
+        account_id = db_queries.get_account_by_user_id(id).id
     else:
-        if isdir(user):
-            print("Directory ./" + user + " already exists.")
+        id = account.user_id
+        account_id = account.id
+
+    if not exists(username):
+        mkdir(username)
+        print("Created directory './" + username + "'.")
+    else:
+        if isdir(username):
+            print("Directory ./" + username + " already exists.")
         else:
             pass
             ### TODO HANDLE CASE WHERE A FILE EXISTS AS THE USERNAME 
 
-    userDir = "./" + user + "/"
+    userDir = "./" + username + "/"
 
-    while True:
+    most_recent_post_date = db_queries.get_latest_post_date(db_queries.get_account_by_user_id(id).id)
+
+    paginationToken = -1
+    while paginationToken is not None:
         query = {'exclude':'retweets,replies', 'expansions':'attachments.media_keys', 'max_results':100}
-        if paginationToken is not None:
+        if paginationToken is not -1 and paginationToken is not None:
             query["pagination_token"] = paginationToken
 
-        response = requests.get('https://api.twitter.com/2/users/'+id+'/tweets', params=query, headers=headers)
+        response = requests.get('https://api.twitter.com/2/users/'+str(id)+'/tweets', params=query, headers=headers)
         totalRequests += 1
         requestLimiter()
         
@@ -88,17 +107,19 @@ def downloadUserMedia(user):
             try:
                 tweet['attachments']
             except:
-                print("No attachments in post.")
+                pass
             else:
                 idList.append(tweet['id'])
 
-        for id in idList:
-            query = {'id':id, 'include_entities':'true', 'trim_user':'true','include_ext_alt_text':'false','include_my_retweet':'false','include_card_uri':'false'}
+        for postID in idList:
+            query = {'id':postID, 'include_entities':'true', 'trim_user':'true','include_ext_alt_text':'false','include_my_retweet':'false','include_card_uri':'false'}
             response = requests.get('https://api.twitter.com/1.1/statuses/show.json', headers=headers, params=query)
+            created_at = reformat_date(response.json()['created_at'])
             totalRequests += 1
             requestLimiter()
-
-            created_at = response.json()['created_at']
+            
+            if most_recent_post_date is not None and created_at <= pytz.UTC.localize(most_recent_post_date):
+                break
             
             media = None
             try:
@@ -107,7 +128,9 @@ def downloadUserMedia(user):
                 print("No media in post.")
             else:
                 for m in media:
-
+                    
+                    db_queries.add_post(account_id, response.json()['id'], created_at)
+                    
                     if m['type'] == 'video':
                         videos = m['video_info']['variants']
                         bitrate = 0
@@ -122,8 +145,7 @@ def downloadUserMedia(user):
                         download(m['media_url_https']+"?name=orig", userDir)
                         
         if paginationToken is None:
-            print("End of downloadable media from " + user + ".")
-            break
+            print("End of downloadable media from " + username + ".")
 
 def main(args):
     del args[0]
@@ -133,8 +155,9 @@ def main(args):
     rtThread = threading.Thread(target=requestTrimmer)
     rtThread.start()
 
-    for user in args:
-        userDLThread = threading.Thread(target=downloadUserMedia, args=(user,))
-        userDLThread.start()
+    for username in args:
+        downloadUserMedia(username)
+        
+    totalRequests = -1
         
 main(sys.argv)

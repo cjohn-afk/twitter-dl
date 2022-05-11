@@ -4,14 +4,10 @@ from sqlalchemy import create_engine
 
 import db_models
 
-from datetime import datetime
-
 from config import database_file
-engine = create_engine("sqlite+pysqlite:///" + database_file, echo=True, future=True)
+## ADD ', echo=True, future=True' below for logging
+engine = create_engine("sqlite+pysqlite:///" + database_file)
 db_models.Base.metadata.create_all(engine)
-
-def reformat_date(twitter_date):
-    return datetime.strftime(datetime.strptime(twitter_date,'%a %b %d %H:%M:%S +0000 %Y'), '%Y-%m-%d %H:%M:%S')
 
 def get_account_by_user_id(user_id):
     with Session(engine) as session:
@@ -28,10 +24,12 @@ def get_account_by_username(username):
         return account
 
 def get_posts_by_account_id(account_id):
-    return session.query(db_models.Post).filter(db_models.Post.account_id == account_id)
+    with Session(engine) as session:
+        return session.query(db_models.Post).filter(db_models.Post.account_id == account_id)
     
 def get_latest_post_date(account_id):
-    return get_posts_by_account_id(account_id).last().post_date
+    first_post = get_posts_by_account_id(account_id).first()
+    return first_post.post_date if first_post is not None else None
 
 def add_account(user_id, username):
     with Session(engine) as session:
@@ -46,8 +44,8 @@ def add_username(account_id, username):
         session.add(new_username)
         session.commit()
 
-def add_post(account_id, post_id, post_date, media_id):
+def add_post(account_id, post_id, post_date):
     with Session(engine) as session:
-        new_post = db_models.Post(account_id = account_id, post_id = post_id, post_date = post_date, media_id = media_id)
+        new_post = db_models.Post(account_id = account_id, post_id = post_id, post_date = post_date)
         session.add(new_post)
         session.commit()

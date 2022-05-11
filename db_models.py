@@ -30,4 +30,3 @@ class Post(Base):
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     post_id = Column(Integer)
     post_date = Column(DateTime)
-    media_id = Column(Integer)
