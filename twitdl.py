@@ -2,6 +2,7 @@ from time import sleep
 from os import mkdir
 from os.path import exists,isdir,isfile
 import sys
+from sqlalchemy import create_engine
 import threading
 import multiprocessing
 import requests
@@ -9,7 +10,11 @@ from requests.structures import CaseInsensitiveDict
 
 from config import *
 
+engine = create_engine("sqlite+pysqlite:///" + database_file, echo=True, future=True)
+
 totalRequests = 0
+headers = CaseInsensitiveDict()
+headers["Authorization"] = "Bearer " + bearer_token
 
 def requestTrimmer():
     global totalRequests
@@ -53,8 +58,7 @@ def downloadUserMedia(user):
             print("Directory ./" + user + " already exists.")
         else:
             pass
-            ### TODO 
-            # HANDLE CASE WHERE A FILE EXISTS AS THE USERNAME 
+            ### TODO HANDLE CASE WHERE A FILE EXISTS AS THE USERNAME 
 
     userDir = "./" + user + "/"
 
@@ -93,6 +97,8 @@ def downloadUserMedia(user):
             response = requests.get('https://api.twitter.com/1.1/statuses/show.json', headers=headers, params=query)
             totalRequests += 1
             requestLimiter()
+
+            created_at = response.json()['created_at']
             
             media = None
             try:
@@ -101,6 +107,7 @@ def downloadUserMedia(user):
                 print("No media in post.")
             else:
                 for m in media:
+
                     if m['type'] == 'video':
                         videos = m['video_info']['variants']
                         bitrate = 0
@@ -118,17 +125,16 @@ def downloadUserMedia(user):
             print("End of downloadable media from " + user + ".")
             break
 
-args = sys.argv
-del args[0]
+def main(args):
+    del args[0]
 
-print(args)
+    print(args)
 
-headers = CaseInsensitiveDict()
-headers["Authorization"] = "Bearer " + bearer_token
+    rtThread = threading.Thread(target=requestTrimmer)
+    rtThread.start()
 
-rtThread = threading.Thread(target=requestTrimmer)
-rtThread.start()
-
-for user in args:
-    userDLThread = threading.Thread(target=downloadUserMedia, args=(user,))
-    userDLThread.start()
+    for user in args:
+        userDLThread = threading.Thread(target=downloadUserMedia, args=(user,))
+        userDLThread.start()
+        
+main(sys.argv)
