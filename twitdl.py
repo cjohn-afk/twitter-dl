@@ -83,7 +83,7 @@ def downloadUserMedia(username):
     paginationToken = -1
     while paginationToken is not None:
         query = {'exclude':'retweets,replies', 'expansions':'attachments.media_keys', 'max_results':100}
-        if paginationToken is not -1 and paginationToken is not None:
+        if paginationToken != -1 and paginationToken is not None:
             query["pagination_token"] = paginationToken
 
         response = requests.get('https://api.twitter.com/2/users/'+str(id)+'/tweets', params=query, headers=headers)
