@@ -4,10 +4,7 @@ from os.path import exists,isdir,isfile
 import sys
 from datetime import datetime
 import pytz
-
 import threading
-import multiprocessing
-
 import requests
 from requests.structures import CaseInsensitiveDict
 
@@ -27,8 +24,6 @@ def requestTrimmer():
     while True:
         if totalRequests > 0:
             totalRequests -= 1
-        elif totalRequests == -1:
-            break
         sleep(1.15)
 
 def requestLimiter():
@@ -153,11 +148,13 @@ def main(args):
     print(args)
 
     rtThread = threading.Thread(target=requestTrimmer)
+    rtThread.daemon = True
     rtThread.start()
 
     for username in args:
         downloadUserMedia(username)
         
     totalRequests = -1
-        
+
 main(sys.argv)
+sys.exit()

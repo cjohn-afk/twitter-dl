@@ -25,7 +25,7 @@ def get_account_by_username(username):
 
 def get_posts_by_account_id(account_id):
     with Session(engine) as session:
-        return session.query(db_models.Post).filter(db_models.Post.account_id == account_id)
+        return session.query(db_models.Post).filter(db_models.Post.account_id == account_id).order_by(db_models.Post.post_date.desc())
     
 def get_latest_post_date(account_id):
     first_post = get_posts_by_account_id(account_id).first()
