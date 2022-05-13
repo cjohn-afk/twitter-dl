@@ -33,27 +33,27 @@ def request_limiter():
             break
         sleep(1.5)
 
-def download(URL, location): 
-    filename = location + URL.split('/')[-1].split('?')[0]
+def download(url, location): 
+    filename = location + url.split('/')[-1].split('?')[0]
     if not exists(filename):
-        print("Downloading " + URL + " to " + filename + ".")
-        data = requests.get(URL).content
+        print("Downloading " + url + " to " + filename + ".")
+        data = requests.get(url).content
         with open(filename, "wb") as file:
             file.write(data)
     else:
-        print(URL)
+        print(url)
         print(filename + " already exists. It will not be downloaded.")
         
 def download_user_media(username):
     global total_requests
-    paginationToken = None
+    pagination_token = None
     
     account = db_queries.get_account_by_username(username)
     if account is None:
         print("No stored ID for " + username + ". Requesting ID...")
         response = requests.get('https://api.twitter.com/2/users/by/username/' + username, headers=headers)
         total_requests += 1
-        requestLimiter()
+        request_limiter()
         id = int(response.json()['data']['id'])
         db_queries.add_account(id, username)
         account_id = db_queries.get_account_by_user_id(id).id
@@ -93,9 +93,9 @@ def download_user_media(username):
         try:
             response.json()['meta']['next_token']
         except:
-            paginationToken = None
+            pagination_token = None
         else:
-            paginationToken = response.json()['meta']['next_token']
+            pagination_token = response.json()['meta']['next_token']
         
         id_list = []
         for tweet in response.json()['data']:
@@ -111,7 +111,7 @@ def download_user_media(username):
             response = requests.get('https://api.twitter.com/1.1/statuses/show.json', headers=headers, params=query)
             created_at = reformat_date(response.json()['created_at'])
             total_requests += 1
-            requestLimiter()
+            request_limiter()
             
             if most_recent_post_date is not None and created_at <= pytz.UTC.localize(most_recent_post_date):
                 break
