@@ -9,4 +9,12 @@ Currently the configuration options are limited to where the database file is st
 
 ## Known Issues
 - User downloads happen synchronously.
-    The process should happen in a multi-threaded manner in which each request user's media is downloaded at once to maximize the potential speed of completion. Currently the tool only downloads one user's media at a time which substantially increases the time to completion.
+The process should happen in a multi-threaded manner in which each request user's media is downloaded at once to maximize the potential speed of completion. Currently the tool only downloads one user's media at a time which substantially increases the time to completion.
+
+- A folder is created for a user even if there is nothing to download.
+
+- User feedback is lacking verbosity and completeness.
+
+- No --help option.
+
+- Cannot choose which items to download by media type.
