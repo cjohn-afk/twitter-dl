@@ -7,6 +7,8 @@ import pytz
 import threading
 import requests
 from requests.structures import CaseInsensitiveDict
+from sqlmanager import SQLManager
+from queue import Queue
 
 import db_queries
 
@@ -144,16 +146,27 @@ def download_user_media(username):
 
 def main(args):
     del args[0]
-
     print(args)
+    
+    user_queues = {}
+    sql_manager_queue = Queue()
+    
+    for username in args:
+        user_queues[username] = Queue()
 
+    sql_manager = SQLManager(sql_manager_queue, user_queues)
+    sql_manager_thread = threading.Thread(target=sql_manager.run)
+    
     request_trimmer_thread = threading.Thread(target=request_trimmer)
     request_trimmer_thread.daemon = True
     request_trimmer_thread.start()
 
     for username in args:
+        #user_downloader_thread = threading.Thread(target=download_user_media, args=(username,user_queues[username],))
+        #user_downloader_thread.start()
         download_user_media(username)
         
+    
     total_requests = -1
 
 main(sys.argv)
