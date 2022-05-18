@@ -46,6 +46,10 @@ def download(url, location):
         print(url)
         print(filename + " already exists. It will not be downloaded.")
         
+def create_directory(username):
+    mkdir(username)
+    print("Created directory './" + username + "'.")
+        
 def download_user_media(username):
     global total_requests
     pagination_token = None
@@ -64,14 +68,13 @@ def download_user_media(username):
         account_id = account.id
 
     if not exists(username):
-        mkdir(username)
-        print("Created directory './" + username + "'.")
+        directory_exists = False
     else:
         if isdir(username):
-            print("Directory ./" + username + " already exists.")
+            directory_exists = True
         else:
             pass
-            ### TODO HANDLE CASE WHERE A FILE EXISTS AS THE USERNAME 
+            ### TODO HANDLE CASE WHERE A FILE EXISTS AS THE USERNAME
 
     user_directory = "./" + username + "/"
 
@@ -124,6 +127,8 @@ def download_user_media(username):
             except:
                 print("No media in post.")
             else:
+                if not directory_exists:
+                    create_directory(username)
                 for m in media:
                     
                     db_queries.add_post(account_id, response.json()['id'], created_at)

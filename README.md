@@ -20,5 +20,3 @@ The process should happen in a multi-threaded manner in which each request user'
 - Cannot choose which items to download by media type.
 
 - Only stores dates of posts with media, instead of the date of the most recent tweet pulled. This leads to excessive requests in cases where there are several posts which lack media in a row.
-
-- Creates a folder for users before detecting if there is media to download leaving an empty folder in cases where there is no media to download.
