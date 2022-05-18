@@ -85,6 +85,7 @@ def download_user_media(username):
     most_recent_post_date = db_queries.get_latest_post_date(db_queries.get_account_by_user_id(id).id)
 
     pagination_token = -1
+    first_request = True
     while pagination_token is not None:
         query = {'exclude':'retweets,replies', 'expansions':'attachments.media_keys', 'max_results':100, 'tweet.fields':'created_at,author_id'}
         if pagination_token != -1 and pagination_token is not None:
@@ -99,9 +100,11 @@ def download_user_media(username):
         except:
             break
         else:
-            newest_tweet = response.json()['data'][0]
-            created_at = reformat_date(newest_tweet['created_at'])
-            db_queries.add_post(account_id, newest_tweet['id'], created_at)
+            if first_request:
+                newest_tweet = response.json()['data'][0]
+                created_at = reformat_date(newest_tweet['created_at'])
+                db_queries.add_post(account_id, newest_tweet['id'], created_at)
+                first_request = False
             
         try:
             response.json()['meta']['next_token']
