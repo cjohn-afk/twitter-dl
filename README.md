@@ -9,7 +9,7 @@ Currently the configuration options are limited to the name/location of the data
 
 ## Known Issues
 - User downloads happen synchronously.
-The process should happen in a multi-threaded manner in which each request user's media is downloaded at once to maximize the potential speed of completion. Currently the tool only downloads one user's media at a time which substantially increases the time to completion.
+The process of downloading user media should happen in a multi-threaded manner in which each user's media is downloaded at one time to maximize the potential speed of completion. Currently the tool only downloads one user's media at a time which substantially increases the time to completion if there is a large amount of media to download.
 
 - User feedback is lacking verbosity and completeness.
 
