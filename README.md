@@ -16,5 +16,3 @@ The process should happen in a multi-threaded manner in which each request user'
 - No --help option.
 
 - Cannot choose which items to download by media type.
-
-- Only stores dates of posts with media, instead of the date of the most recent tweet pulled. This leads to excessive requests in cases where there are several posts which lack media in a row.
