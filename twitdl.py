@@ -3,6 +3,7 @@ from os import mkdir
 from os.path import exists,isdir,isfile
 import sys
 from datetime import datetime
+from dateutil import parser
 import pytz
 import threading
 import requests
@@ -19,7 +20,8 @@ headers = CaseInsensitiveDict()
 headers["Authorization"] = "Bearer " + bearer_token
 
 def reformat_date(twitter_date):
-    return  datetime.strptime(twitter_date,'%a %b %d %H:%M:%S +0000 %Y').replace(tzinfo=pytz.UTC)
+    return parser.parse(twitter_date)
+    #return  datetime.strptime(twitter_date,'%a %b %d %H:%M:%S +0000 %Y').replace(tzinfo=pytz.UTC)
 
 def request_trimmer():
     global total_requests
@@ -54,6 +56,8 @@ def download_user_media(username):
     global total_requests
     pagination_token = None
     
+    print("Downloading media from " + username)
+    
     account = db_queries.get_account_by_username(username)
     if account is None:
         print("No stored ID for " + username + ". Requesting ID...")
@@ -82,7 +86,7 @@ def download_user_media(username):
 
     pagination_token = -1
     while pagination_token is not None:
-        query = {'exclude':'retweets,replies', 'expansions':'attachments.media_keys', 'max_results':100}
+        query = {'exclude':'retweets,replies', 'expansions':'attachments.media_keys', 'max_results':100, 'tweet.fields':'created_at,author_id'}
         if pagination_token != -1 and pagination_token is not None:
             query["pagination_token"] = pagination_token
 
@@ -94,6 +98,10 @@ def download_user_media(username):
             response.json()['data']
         except:
             break
+        else:
+            newest_tweet = response.json()['data'][0]
+            created_at = reformat_date(newest_tweet['created_at'])
+            db_queries.add_post(account_id, newest_tweet['id'], created_at)
             
         try:
             response.json()['meta']['next_token']
@@ -103,13 +111,21 @@ def download_user_media(username):
             pagination_token = response.json()['meta']['next_token']
         
         id_list = []
-        for tweet in response.json()['data']:
-            try:
-                tweet['attachments']
-            except:
-                pass
-            else:
-                id_list.append(tweet['id'])
+        ## TODO: Rework the check for newest tweet vs tweet.
+        try:
+            for tweet in response.json()['data']:
+                created_at = reformat_date(tweet['created_at'])
+                if most_recent_post_date is not None and created_at <= pytz.UTC.localize(most_recent_post_date):
+                    raise Exception()
+                try:
+                    tweet['attachments']
+                except:
+                    pass
+                else:
+                    id_list.append(tweet['id'])
+        except:
+            pagination_token = None
+            pass
 
         for post_id in id_list:
             query = {'id':post_id, 'include_entities':'true', 'trim_user':'true','include_ext_alt_text':'false','include_my_retweet':'false','include_card_uri':'false'}
@@ -117,9 +133,6 @@ def download_user_media(username):
             created_at = reformat_date(response.json()['created_at'])
             total_requests += 1
             request_limiter()
-            
-            if most_recent_post_date is not None and created_at <= pytz.UTC.localize(most_recent_post_date):
-                break
             
             media = None
             try:
@@ -130,8 +143,6 @@ def download_user_media(username):
                 if not directory_exists:
                     create_directory(username)
                 for m in media:
-                    
-                    db_queries.add_post(account_id, response.json()['id'], created_at)
                     
                     if m['type'] == 'video':
                         videos = m['video_info']['variants']
@@ -146,8 +157,10 @@ def download_user_media(username):
                     else:
                         download(m['media_url_https']+"?name=orig", user_directory)
                         
+                    db_queries.add_post(account_id, response.json()['id'], created_at)
+                        
         if pagination_token is None:
-            print("End of downloadable media from " + username + ".")
+            print("End of downloadable media from " + username + "\n")
 
 def main(args):
     del args[0]
