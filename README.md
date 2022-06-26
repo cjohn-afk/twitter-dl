@@ -13,6 +13,6 @@ The process of downloading user media should happen in a multi-threaded manner i
 
 - User feedback is lacking verbosity and completeness.
 
-- No --help option.
-
 - Cannot choose which items to download by media type.
+
+- Error handling is nearly nonexistent.
