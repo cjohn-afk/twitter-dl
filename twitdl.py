@@ -1,8 +1,10 @@
+#! /usr/bin/env python3
+
 from time import sleep
 from os import mkdir
 from os.path import exists,isdir,isfile
 import sys
-from datetime import datetime
+#from datetime import datetime
 from dateutil import parser
 import pytz
 import threading
@@ -13,7 +15,14 @@ from queue import Queue
 
 import db_queries
 
-from config import bearer_token
+from argument_handler import args
+
+if args.bearer_token is None:
+    print("No bearer token specified.")
+    from config import bearer_token
+else:
+    bearer_token = args.bearer_token
+print("Using bearer token: " + bearer_token)
 
 total_requests = 0
 headers = CaseInsensitiveDict()
@@ -64,6 +73,7 @@ def download_user_media(username):
         response = requests.get('https://api.twitter.com/2/users/by/username/' + username, headers=headers)
         total_requests += 1
         request_limiter()
+        #TODO: Handle case where username doesn't exist or is not found. Currently the assignment of 'id' below causes an error in this case because the response will not contain a data key if the username is not found.
         id = int(response.json()['data']['id'])
         db_queries.add_account(id, username)
         account_id = db_queries.get_account_by_user_id(id).id
@@ -145,6 +155,7 @@ def download_user_media(username):
             else:
                 if not directory_exists:
                     create_directory(username)
+                    directory_exists = True
                 for m in media:
                     
                     if m['type'] == 'video':
@@ -166,13 +177,23 @@ def download_user_media(username):
             print("End of downloadable media from " + username + "\n")
 
 def main(args):
-    del args[0]
     print(args)
+    if args.list is not None:
+        print("Reading usernames from " + args.list + "...")
+        #TODO: Read list into user_list
+        pass
+    elif args.username is not None:
+        user_list = args.username
+    else:
+        pass
+        #TODO: Handle case where no userlist or usernames are specified.
+        
+    print(user_list)
     
     user_queues = {}
     sql_manager_queue = Queue()
     
-    for username in args:
+    for username in user_list:
         user_queues[username] = Queue()
 
     sql_manager = SQLManager(sql_manager_queue, user_queues)
@@ -182,7 +203,7 @@ def main(args):
     request_trimmer_thread.daemon = True
     request_trimmer_thread.start()
 
-    for username in args:
+    for username in user_list:
         #user_downloader_thread = threading.Thread(target=download_user_media, args=(username,user_queues[username],))
         #user_downloader_thread.start()
         download_user_media(username)
@@ -190,5 +211,5 @@ def main(args):
     
     total_requests = -1
 
-main(sys.argv)
+main(args)
 sys.exit()
