@@ -8,6 +8,8 @@ twitdl.py takes in a list of twitter usernames as command like arguments. It the
 Currently the configuration options are limited to the name/location of the database file (database_file), and setting the Twitter API bearer token (bearer_token) which is required for this tool to work (token can be requested through dev.twitter.com). These configuration variables are stored in config.py.
 
 ## Known Issues
+- Only tested on Linux. This is by design and I have no plans right now to ensure it is cross-compatible with Windows and macOS.
+
 - User downloads happen synchronously.
 The process of downloading user media should happen in a multi-threaded manner in which each user's media is downloaded at one time to maximize the potential speed of completion. Currently the tool only downloads one user's media at a time which substantially increases the time to completion if there is a large amount of media to download.
 
