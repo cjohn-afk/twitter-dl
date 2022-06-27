@@ -58,7 +58,16 @@ def download(url, location):
 def create_directory(username):
     Path(username).mkdir()
     print("Created directory './" + username + "'.")
-        
+
+def read_user_list(user_list_file):
+    user_list = []
+    with open(user_list_file, 'rt') as file:
+        while(user := file.readline().rstrip()):
+            if user is not None:
+                user_list.append(user)
+            
+    return user_list
+
 def download_user_media(username):
     global total_requests
     pagination_token = None
@@ -175,16 +184,13 @@ def download_user_media(username):
             print("End of downloadable media from " + username + "\n")
 
 def main(args):
-    print(args)
+
     if args.list is not None:
-        print("Reading usernames from " + args.list + "...")
-        #TODO: Read list into user_list
-        pass
-    elif args.username is not None:
-        user_list = args.username
-    else:
-        pass
-        #TODO: Handle case where no userlist or usernames are specified.
+        print("Reading usernames from " + args.list)
+        user_list = read_user_list(Path(args.list).expanduser())
+    if args.username is not None and args.username:
+        user_list.append(args.username)
+    #TODO: Handle case where no userlist or usernames are specified.
         
     print(user_list)
     
