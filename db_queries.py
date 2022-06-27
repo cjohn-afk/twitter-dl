@@ -6,7 +6,7 @@ import db_models
 
 from config import database_file
 ## ADD ', echo=True, future=True' below for logging
-engine = create_engine("sqlite+pysqlite:///" + database_file)
+engine = create_engine("sqlite+pysqlite:///" + str(database_file))
 db_models.Base.metadata.create_all(engine)
 
 def get_account_by_user_id(user_id):
