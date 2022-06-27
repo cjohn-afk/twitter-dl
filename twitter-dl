@@ -13,14 +13,17 @@ from sqlmanager import SQLManager
 from queue import Queue
 import db_queries
 from argument_handler import args
-from config import set_bearer_token, bearer_token
+from config import set_bearer_token, bearer_token, download_directory
 
 if args.bearer_token is None:
     print("No bearer token specified.")
 else:
     set_bearer_token(args.bearer_token)
-    
+
 print("Using bearer token: " + bearer_token)
+
+if args.target_dir is not None:
+    download_directory = Path(args.target_dir).expanduser()
 
 total_requests = 0
 headers = CaseInsensitiveDict()
@@ -45,7 +48,7 @@ def request_limiter():
         sleep(1.5)
 
 def download(url, location): 
-    filename = Path(location + url.split('/')[-1].split('?')[0])
+    filename = download_directory / Path(location + url.split('/')[-1].split('?')[0])
     if not filename.exists():
         print("Downloading " + url + " to " + str(filename) + ".")
         data = requests.get(url).content
@@ -56,8 +59,9 @@ def download(url, location):
         print(str(filename) + " already exists. It will not be downloaded.")
         
 def create_directory(username):
-    Path(username).mkdir()
-    print("Created directory './" + username + "'.")
+    user_dir = download_directory / username
+    user_dir.mkdir()
+    print('Created directory ' + str(user_dir))
 
 def read_user_list(user_list_file):
     user_list = []
@@ -185,35 +189,38 @@ def download_user_media(username):
 
 def main(args):
 
+    user_list = []
     if args.list is not None:
         print("Reading usernames from " + args.list)
         user_list = read_user_list(Path(args.list).expanduser())
+    
     if args.username is not None and args.username:
-        user_list.append(args.username)
-    #TODO: Handle case where no userlist or usernames are specified.
+        user_list += args.username
         
-    print(user_list)
+    if user_list:
+        
+        print(user_list)
     
-    user_queues = {}
-    sql_manager_queue = Queue()
+        #user_queues = {}
+        #sql_manager_queue = Queue()
     
-    for username in user_list:
-        user_queues[username] = Queue()
+        #for username in user_list:
+        #    user_queues[username] = Queue()
 
-    sql_manager = SQLManager(sql_manager_queue, user_queues)
-    sql_manager_thread = threading.Thread(target=sql_manager.run)
+        #sql_manager = SQLManager(sql_manager_queue, user_queues)
+        #sql_manager_thread = threading.Thread(target=sql_manager.run)
     
-    request_trimmer_thread = threading.Thread(target=request_trimmer)
-    request_trimmer_thread.daemon = True
-    request_trimmer_thread.start()
+        request_trimmer_thread = threading.Thread(target=request_trimmer)
+        request_trimmer_thread.daemon = True
+        request_trimmer_thread.start()
 
-    for username in user_list:
-        #user_downloader_thread = threading.Thread(target=download_user_media, args=(username,user_queues[username],))
-        #user_downloader_thread.start()
-        download_user_media(username)
+        for username in user_list:
+            #user_downloader_thread = threading.Thread(target=download_user_media, args=(username,user_queues[username],))
+            #user_downloader_thread.start()
+            download_user_media(username)
         
     
-    total_requests = -1
+        total_requests = -1
 
 main(args)
 sys.exit()
