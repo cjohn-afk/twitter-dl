@@ -16,11 +16,11 @@ from argument_handler import args
 from config import set_bearer_token, bearer_token, download_directory
 
 if args.bearer_token is None:
-    print("No bearer token specified.")
+    print("No bearer token specified")
 else:
     set_bearer_token(args.bearer_token)
 
-print("Using bearer token: " + bearer_token)
+print("Using stored bearer token")
 
 if args.target_dir is not None:
     download_directory = Path(args.target_dir).expanduser()
@@ -48,7 +48,7 @@ def request_limiter():
         sleep(1.5)
 
 def download(url, location): 
-    filename = download_directory / Path(location + url.split('/')[-1].split('?')[0])
+    filename = location / url.split('/')[-1].split('?')[0]
     if not filename.exists():
         print("Downloading " + url + " to " + str(filename) + ".")
         data = requests.get(url).content
@@ -60,7 +60,7 @@ def download(url, location):
         
 def create_directory(username):
     user_dir = download_directory / username
-    user_dir.mkdir()
+    user_dir.mkdir(parents = True)
     print('Created directory ' + str(user_dir))
 
 def read_user_list(user_list_file):
@@ -77,6 +77,7 @@ def download_user_media(username):
     pagination_token = None
     
     print("Downloading media from " + username)
+    user_directory = download_directory / username
     
     account = db_queries.get_account_by_username(username)
     if account is None:
@@ -92,16 +93,14 @@ def download_user_media(username):
         id = account.user_id
         account_id = account.id
 
-    if not Path(username).exists():
+    if not user_directory.exists():
         directory_exists = False
     else:
-        if Path(username).is_dir():
+        if user_directory.is_dir():
             directory_exists = True
         else:
             pass
             ### TODO HANDLE CASE WHERE A FILE EXISTS AS THE USERNAME
-
-    user_directory = "./" + username + "/"
 
     most_recent_post_date = db_queries.get_latest_post_date(db_queries.get_account_by_user_id(id).id)
 
@@ -199,8 +198,6 @@ def main(args):
         
     if user_list:
         
-        print(user_list)
-    
         #user_queues = {}
         #sql_manager_queue = Queue()
     
