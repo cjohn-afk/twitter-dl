@@ -2,15 +2,15 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Command line tool to download media from Twitter profiles.')
 parser.add_argument('--bearer-token',
-                    help='Twitter API bearer token, this token will be saved and automatically used when this option is unspecified')
+                    help='specify the Twitter API bearer token, this token will be saved and used as the default value when this option is unspecified')
 
 parser.add_argument('-n', '--newest', action='store_true',
                     help='download media which has not already been downloaded (NOT IMPLEMENTED)')
 
-parser.add_argument('--pictures-only', action='store_true',
+parser.add_argument('-p', '--pictures-only', action='store_true',
                     help='download pictures, do not download videos (NOT IMPLEMENTED)')
 
-parser.add_argument('--videos-only', action='store_true',
+parser.add_argument('-v', '--videos-only', action='store_true',
                     help='download videos, do not download pictures (NOT IMPLEMENTED)')
 
 parser.add_argument('-t', '--target-dir',

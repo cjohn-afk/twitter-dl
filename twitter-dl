@@ -151,7 +151,7 @@ def download_user_media(username):
             pass
 
         for post_id in id_list:
-            query = {'id':post_id, 'include_entities':'true', 'trim_user':'true','include_ext_alt_text':'false','include_my_retweet':'false','include_card_uri':'false'}
+            query = {'id':post_id, 'include_entities':'true', 'trim_user':'true','include_ext_alt_text':'false','include_my_retweet':'false','include_card_uri':'false','tweet_mode':'extended'}
             response = requests.get('https://api.twitter.com/1.1/statuses/show.json', headers=headers, params=query)
             created_at = reformat_date(response.json()['created_at'])
             total_requests += 1
@@ -161,6 +161,7 @@ def download_user_media(username):
             try:
                 media = response.json()['extended_entities']['media']
             except:
+                print(response.json())
                 print("No media in post.")
             else:
                 if not directory_exists:
