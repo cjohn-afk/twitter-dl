@@ -22,7 +22,7 @@ def set_bearer_token(bearer__token):
 config_dir = Path.home() / '.config' / 'twitter-dl'
 setup_config_folder(config_dir)
 
-download_directory = Path.home() / 'Downloads' / 'twitter-dl'
+download_directory = Path.home() / 'Downloads' / 'test'
 
 bearer_token_file = config_dir / 'bearer_token'
 database_file = config_dir / 'twitter-dl.db'
