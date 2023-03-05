@@ -1,8 +1,13 @@
 # twitter-dl
 A command line tool to download media from twitter profiles.
-
 ## How it works
-twitter-dl is a tool that allows you to download media from twitter profiles. It can take one or more username via command line or list file and download all media associated with the sepcified account(s). Several options exist to tailor what will be downloaded from the twitter profile. You may choose to only download photos, videos or both (default). There is also an option to 'update', which will only download media which is newer than the most recent previously downloaded media. Keep in mind that a Twitter API bearer token is required for this tool to work.
+It can take in one or more usernames as command line arguments or a text file containing a list of newline separated usernames or both, and it will retrieve the media from each account. You may choose to download videos, photos, or both (default). You also have the option of limiting your download to media that is newer than the newest media you've already downloaded. \
+\
+A [Twitter API](https://developer.twitter.com/en/docs/twitter-api) bearer token is required. In the future I may include an option to gather media using web scraping which does not require direct API access. \
+\
+Please don't hesitate to file an issue if you have any problems using this tool or have a suggestion to improve it.
 
-## Config
-Upon its first execution twitter-dl creates a directory at ~/.config/twitter-dl in which it stores two files. The first file is 'twitter-dl.db', an sqlite database containing information about downloaded tweets. The second file is 'bearer_token', a file that contains a Twitter API bearer token. The bearer_token file is only created when a bearer token is supplied using the --bearer-token argument (i.e. twitter-dl --bearer-token=[YOUR BEARER TOKEN]).
+## Configuration
+Upon first execution, twitter-dl creates a directory at *~/.config/twitter-dl* in which it stores two files.
+- '*twitter-dl.db*': an sqlite database containing information about downloaded tweets.
+- '*bearer_token*': used to store the bearer token.
