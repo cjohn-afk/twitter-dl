@@ -11,3 +11,6 @@ Please don't hesitate to file an issue if you have any problems using this tool 
 Upon first execution, twitter-dl creates a directory at *~/.config/twitter-dl* in which it stores two files.
 - '*twitter-dl.db*': an sqlite database containing information about downloaded tweets.
 - '*bearer_token*': used to store the bearer token.
+
+## Attention!
+Due to API access restrictions at X (formerly known as Twitter), it is no longer possible to test this tool's functionality or guarantee its operation. This project should be considered inactive until testing APIs are accessible.
